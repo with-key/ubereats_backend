@@ -5,6 +5,7 @@ import { StoreModule } from './store/store.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
+import { Store } from './store/entities/store.entity';
 
 @Module({
   imports: [
@@ -33,8 +34,9 @@ import * as Joi from 'joi';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      synchronize: true,
+      // synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
       logging: true, // db에서 일어나는 일을 터미널에 표시 여부
+      entities: [Store],
     }),
     StoreModule,
   ],
