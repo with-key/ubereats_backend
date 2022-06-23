@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { Store } from './store/entities/store.entity';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -24,8 +25,8 @@ import { Store } from './store/entities/store.entity';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      // autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // code first 방식으로 설정
-      autoSchemaFile: true, // 설정은 사용하되, 파일 생성은 하지 않음
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // code first 방식으로 설정
+      // autoSchemaFile: true, // 설정은 사용하되, 파일 생성은 하지 않음
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -34,7 +35,7 @@ import { Store } from './store/entities/store.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      // synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
+      synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
       logging: true, // db에서 일어나는 일을 터미널에 표시 여부
       entities: [Store],
     }),

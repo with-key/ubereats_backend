@@ -1,3 +1,4 @@
+import { UpdateStoreDto } from './dtos/update-store.dto';
 import { StoreService } from './store.service';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CreateStoreDto } from './dtos/create-store.dto';
@@ -18,31 +19,26 @@ export class StoreResolver {
 
   // Resolver안에서 Query, Mutation 요청이 생성된다.
   @Mutation(() => Boolean) // 해당 요청에 대한 응답 타입을 인자에 넣는다.
-  createStore(@Args() newStoreInfo: CreateStoreDto): boolean {
-    console.log(newStoreInfo);
-    return true;
+  async createStore(
+    @Args('newStoreData') newStoreInfo: CreateStoreDto,
+  ): Promise<boolean> {
+    try {
+      await this.storeService.createStore(newStoreInfo);
+      return true;
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  }
+
+  @Mutation(() => Boolean)
+  async updateStore(@Args() data: UpdateStoreDto): Promise<boolean> {
+    try {
+      await this.storeService.updateStore(data);
+      return true;
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
   }
 }
-
-/**
- * InputType : Qeury나 Mutation에서 Args의 타입을 설정할 때 Entity에서 설정한 것을 넣어줘야 하는데
- * 이때 코드 중복이 발생하고, 하드 코딩으로 해야 하기때문에 휴먼 에러가 있을 수 있음. 이것을 보완하기 위한
- * 유틸리티 데코레이터이다. Object를 통째로 전달해준다.
- * 예를 들면,
- * 서버 : @Args('newStoreInfo) newStoreInfo: CreateStoreDto,
- * 클라 : createStore(storeInfomation)
- *
- * ArgsType: 분리된 값을 GQL에 전달할 때 사용한다.
- * 예를 들면,
- * 서버 : @Args() newStoreInfo: CreateStoreDto,
- * 클라 
- *  mutation {
-   createStore(newStoreInfo : {
-    name: "",
-    isVegan : true,
-    address: "",
-    ownerName:""
-  })
-}
- * 
- */

@@ -1,6 +1,8 @@
+import { UpdateStoreDto } from './dtos/update-store.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
+import { CreateStoreDto } from './dtos/create-store.dto';
 import { Store } from './entities/store.entity';
 
 // Service는 중간의 로직을 가지고 있는 파일이다.
@@ -13,5 +15,15 @@ export class StoreService {
   ) {}
   getAll(): Promise<Store[]> {
     return this.store.find();
+  }
+
+  createStore(createStoreDto: CreateStoreDto): Promise<Store> {
+    const newStore = this.store.create(createStoreDto);
+    return this.store.save(newStore);
+  }
+
+  // update는 Promise를 반환한다
+  updateStore(updateStoreDto: UpdateStoreDto): Promise<UpdateResult> {
+    return this.store.update(updateStoreDto.id, { ...updateStoreDto.data });
   }
 }

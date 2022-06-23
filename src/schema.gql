@@ -1,0 +1,37 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Store {
+  id: Float!
+  name: String!
+  isVegan: Boolean!
+  address: String!
+  ownerName: String!
+  categoryName: String!
+}
+
+type Query {
+  getStore: [Store!]!
+}
+
+type Mutation {
+  createStore(newStoreData: CreateStoreDto!): Boolean!
+  updateStore(id: Float!, data: UpdateInputType!): Boolean!
+}
+
+input CreateStoreDto {
+  name: String!
+  isVegan: Boolean = true
+  address: String = "강남"
+  ownerName: String!
+  categoryName: String!
+}
+
+input UpdateInputType {
+  name: String
+  isVegan: Boolean = true
+  address: String = "강남"
+  ownerName: String
+  categoryName: String
+}
