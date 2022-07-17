@@ -1,11 +1,12 @@
+import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'; // >= v10 설정
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
-import { join } from 'path';
 import { CommonModule } from './common/common.module';
+import { UsersModule } from './users/users.module';
+import { User } from './users/entities/user.entity';
 
 @Module({
   imports: [
@@ -24,8 +25,8 @@ import { CommonModule } from './common/common.module';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // code first 방식으로 설정
-      // autoSchemaFile: true, // 설정은 사용하되, 파일 생성은 하지 않음
+      // autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // code first 방식으로 설정
+      autoSchemaFile: true, // 설정은 사용하되, 파일 생성은 하지 않음
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -34,11 +35,12 @@ import { CommonModule } from './common/common.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      // synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
+      synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
       logging: true, // db에서 일어나는 일을 터미널에 표시 여부
-      entities: [],
+      entities: [User],
     }),
     CommonModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],
