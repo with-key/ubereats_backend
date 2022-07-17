@@ -11,7 +11,7 @@ import { Store } from './entities/store.entity';
 @Injectable()
 export class StoreService {
   constructor(
-    @InjectRepository(Store) private readonly store: Repository<Store>,
+    @InjectRepository(Store) private readonly store: Repository<Store>, // Repository를 별도로 생성하지 않고, Entity를 변환해서 사용하였다.
   ) {}
   getAll(): Promise<Store[]> {
     return this.store.find();
