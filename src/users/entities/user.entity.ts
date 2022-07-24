@@ -47,4 +47,16 @@ export class User extends CoreEntity {
       throw new InternalServerErrorException('서버에러 발생');
     }
   }
+
+  /**
+   * 비밀번호 체크
+   */
+  async checkPassword(aPassword: string): Promise<boolean> {
+    try {
+      return await bcrypt.compare(aPassword, this.password);
+    } catch (e) {
+      console.log(e);
+      throw new InternalServerErrorException();
+    }
+  }
 }

@@ -5,6 +5,9 @@ import {
   CreateAccountInput,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
+import { LoginInput, LoginOutput } from './dtos/login.dto';
+import { UnauthorizedException } from '@nestjs/common';
+import e from 'express';
 
 @Resolver((_) => User) // Entity
 export class UsersResolver {
@@ -32,6 +35,19 @@ export class UsersResolver {
       };
     } catch (e) {
       //
+    }
+  }
+
+  // 로그인
+  @Mutation(() => LoginOutput)
+  async login(@Args('input') loginIput: LoginInput): Promise<LoginOutput> {
+    try {
+      return await this.userService.login(loginIput);
+    } catch (error) {
+      return {
+        ok: false,
+        error: error,
+      };
     }
   }
 }
