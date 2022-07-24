@@ -1,6 +1,8 @@
 import { Field, InputType, registerEnumType } from '@nestjs/graphql';
 import { CoreEntity } from 'src/common/entities/core.entity';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { InternalServerErrorException } from '@nestjs/common';
 
 // type UserRole = 'client' | 'owner' | 'delivery';
 enum UserRole {
@@ -32,4 +34,17 @@ export class User extends CoreEntity {
   @Column()
   @Field(() => String)
   password: string;
+
+  /**
+   * user의 entity를 저장하기전에 password를 hash 한다.
+   */
+  @BeforeInsert()
+  async hashPassword(): Promise<void> {
+    try {
+      this.password = await bcrypt.hash(this.password, 10);
+    } catch (e) {
+      console.log(e);
+      throw new InternalServerErrorException('서버에러 발생');
+    }
+  }
 }
