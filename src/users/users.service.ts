@@ -4,14 +4,13 @@ import { Repository } from 'typeorm';
 import { CreateAccountInput } from './dtos/create-account.dto';
 import { LoginInput } from './dtos/login.dto';
 import { User } from './entities/user.entity';
-import * as jwt from 'jsonwebtoken';
-import { ConfigService } from '@nestjs/config';
+import { JwtService } from 'src/jwt/jwt.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly config: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async createAccount({
@@ -72,7 +71,7 @@ export class UserService {
           error: '비밀번호가 일치하지 않습니다.',
         };
       }
-      const token = jwt.sign({ id: user.id }, this.config.get('SECRET_KEY'));
+      const token = this.jwtService.sign(user.id);
       return {
         ok: true,
         token,
@@ -83,5 +82,13 @@ export class UserService {
         error,
       };
     }
+  }
+
+  findById(id: number): Promise<User> {
+    return this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
   }
 }

@@ -1,13 +1,11 @@
 import { UserService } from './users.service';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { User } from './entities/user.entity';
 import {
   CreateAccountInput,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { LoginInput, LoginOutput } from './dtos/login.dto';
-import { UnauthorizedException } from '@nestjs/common';
-import e from 'express';
 
 @Resolver((_) => User) // Entity
 export class UsersResolver {
@@ -48,6 +46,16 @@ export class UsersResolver {
         ok: false,
         error: error,
       };
+    }
+  }
+
+  @Query(() => User)
+  me(@Context() context) {
+    console.log(context.user);
+    if (!context.user) {
+      return;
+    } else {
+      return context.user;
     }
   }
 }

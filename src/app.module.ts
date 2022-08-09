@@ -1,5 +1,10 @@
 import { ConfigModule } from '@nestjs/config';
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'; // >= v10 설정
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,6 +12,8 @@ import * as Joi from 'joi';
 import { CommonModule } from './common/common.module';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
+import { JwtModule } from './jwt/jwt.module';
+import { JwtMiddleware } from './jwt/jwt.middleware';
 
 @Module({
   imports: [
@@ -26,8 +33,8 @@ import { User } from './users/entities/user.entity';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      // autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // code first 방식으로 설정
-      autoSchemaFile: true, // 설정은 사용하되, 파일 생성은 하지 않음
+      autoSchemaFile: true,
+      context: ({ req }) => ({ user: req['user'] }),
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -40,13 +47,21 @@ import { User } from './users/entities/user.entity';
       logging: true, // db에서 일어나는 일을 터미널에 표시 여부
       entities: [User],
     }),
+    JwtModule.forRoot({
+      privateKey: process.env.SECRET_KEY,
+    }),
     CommonModule,
     UsersModule,
   ],
-  controllers: [],
-  providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(JwtMiddleware).forRoutes({
+      path: '/graphql',
+      method: RequestMethod.POST,
+    });
+  }
+}
 
 /**
  * Code First VS Schema First 설정
