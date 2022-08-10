@@ -5,6 +5,7 @@ import { CreateAccountInput } from './dtos/create-account.dto';
 import { LoginInput } from './dtos/login.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from 'src/jwt/jwt.service';
+import { EditProfileInput } from './dtos/edit-profile.dto';
 
 @Injectable()
 export class UserService {
@@ -84,11 +85,34 @@ export class UserService {
     }
   }
 
-  findById(id: number): Promise<User> {
+  async findById(id: number): Promise<User> {
     return this.userRepository.findOne({
       where: {
         id,
       },
     });
+  }
+  /**
+   * @BeforeUpdate()를 사용했음에도 비밀번호 변경 시, 해쉬가 되지 않는 이유
+   * entity를 거치지 않고 db에 바로 query를 보내기 때문이다. 그래서 빠르지만, @BeforeUpdate()가 패스된다.
+   * 그래서 이것을 해결하기 위해 update가 아니라 save를 사용한다.
+   */
+  async editProfile(userId: number, { email, password }: EditProfileInput) {
+    // return this.userRepository.update(userId, { ...editProfileInput });
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (email) {
+      user.email = email;
+    }
+
+    if (password) {
+      user.password = password;
+    }
+
+    return this.userRepository.save(user);
   }
 }
