@@ -9,11 +9,11 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'; // >= v10 설정
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as Joi from 'joi';
-import { CommonModule } from './common/common.module';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -50,8 +50,8 @@ import { JwtMiddleware } from './jwt/jwt.middleware';
     JwtModule.forRoot({
       privateKey: process.env.SECRET_KEY,
     }),
-    CommonModule,
     UsersModule,
+    AuthModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -12,14 +12,14 @@ export class JwtMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     if ('x-jwt' in req.headers) {
       const token = req.headers['x-jwt'];
-      const decoded = this.jwtService.verify(token.toString());
-      if (typeof decoded === 'object' && decoded.hasOwnProperty('id')) {
-        try {
+      try {
+        const decoded = this.jwtService.verify(token.toString());
+        if (typeof decoded === 'object' && decoded.hasOwnProperty('id')) {
           const user = await this.userService.findById(decoded['id']);
           req['user'] = user; // request 안에 user 라는 property를 새롭게 만들어 준 것
-        } catch (e) {
-          console.log(e);
         }
+      } catch (e) {
+        console.log(e);
       }
     }
 
@@ -27,5 +27,3 @@ export class JwtMiddleware implements NestMiddleware {
     next();
   }
 }
-
-// 클래스가 아닌 function 자체를 등록해서 미들웨어를 구현할 수 있다.

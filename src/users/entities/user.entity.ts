@@ -1,4 +1,9 @@
-import { Field, InputType, registerEnumType } from '@nestjs/graphql';
+import {
+  Field,
+  InputType,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -17,6 +22,7 @@ enum UserRole {
 registerEnumType(UserRole, { name: 'UserRole' }); // ???
 
 @InputType({ isAbstract: true })
+@ObjectType()
 @Entity()
 export class User extends CoreEntity {
   @PrimaryGeneratedColumn()
