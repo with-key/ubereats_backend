@@ -9,6 +9,7 @@ import { LoginInput, LoginOutput } from './dtos/login.dto';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AuthUser } from 'src/auth/auth-user.decorator';
+import { UseProfileOutput, UserProfileInput } from './dtos/user-profile.dto';
 
 @Resolver((_) => User) // Entity
 export class UsersResolver {
@@ -52,9 +53,41 @@ export class UsersResolver {
     }
   }
 
-  @Query(() => User)
+  /**
+   *
+   * @param authUser
+   * @returns 나의 정보를 조회
+   */
   @UseGuards(AuthGuard)
+  @Query(() => User)
   me(@AuthUser() authUser: User) {
     return authUser;
+  }
+
+  /**
+   *
+   * @param userProfileInput
+   * @returns 타인의 정보를 조회
+   */
+  @UseGuards(AuthGuard)
+  @Query(() => UseProfileOutput)
+  async userProfile(
+    @Args() userProfileInput: UserProfileInput,
+  ): Promise<UseProfileOutput> {
+    try {
+      const user = await this.userService.findById(userProfileInput.userId);
+      if (!user) {
+        throw Error();
+      }
+      return {
+        ok: true,
+        user,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: '유저를 찾을 수 없습니다.',
+      };
+    }
   }
 }
