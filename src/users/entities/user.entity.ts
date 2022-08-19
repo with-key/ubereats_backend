@@ -43,9 +43,13 @@ export class User extends CoreEntity {
   @Field(() => UserRole)
   role: UserRole;
 
-  @Column()
+  @Column({ select: false }) // select를 false로 하면, user를 조회할 때 정보가 제외된다
   @Field(() => String)
   password: string;
+
+  @Column({ default: false })
+  @Field(() => Boolean)
+  verified: boolean;
 
   /**
    * user의 entity를 저장하기전에 password를 hash 한다.
@@ -53,10 +57,12 @@ export class User extends CoreEntity {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword(): Promise<void> {
-    try {
-      this.password = await bcrypt.hash(this.password, 10);
-    } catch (e) {
-      throw new InternalServerErrorException('서버에러 발생');
+    if (this.password) {
+      try {
+        this.password = await bcrypt.hash(this.password, 10);
+      } catch (e) {
+        console.log(e);
+      }
     }
   }
 
@@ -67,6 +73,7 @@ export class User extends CoreEntity {
     try {
       return await bcrypt.compare(aPassword, this.password);
     } catch (e) {
+      console.log(e);
       throw new InternalServerErrorException();
     }
   }

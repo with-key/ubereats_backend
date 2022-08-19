@@ -6,11 +6,15 @@ import { LoginInput } from './dtos/login.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from 'src/jwt/jwt.service';
 import { EditProfileInput } from './dtos/edit-profile.dto';
+import { Verification } from './entities/verification.entity';
+import { VerifyEmailInput } from './dtos/verify-eamil.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Verification)
+    private readonly verificationService: Repository<Verification>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -33,11 +37,17 @@ export class UserService {
 
       // save: db에 저장, create: db에 저장할 아이템을 생성
       // create 전에 @BeforeInsert 에 의해서 비밀번호가 hash된다.
-      await this.userRepository.save(
+      const user = await this.userRepository.save(
         this.userRepository.create({
           email,
           password,
           role,
+        }),
+      );
+
+      await this.verificationService.save(
+        this.verificationService.create({
+          user,
         }),
       );
     } catch (error) {
@@ -55,7 +65,10 @@ export class UserService {
         where: {
           email,
         },
+        select: ['password', 'id'],
       });
+
+      console.log('user', user);
 
       if (!user) {
         return {
@@ -72,6 +85,7 @@ export class UserService {
           error: '비밀번호가 일치하지 않습니다.',
         };
       }
+
       const token = this.jwtService.sign(user.id);
       return {
         ok: true,
@@ -107,6 +121,12 @@ export class UserService {
 
     if (email) {
       user.email = email;
+      user.verified = false;
+      await this.verificationService.save(
+        this.verificationService.create({
+          user,
+        }),
+      );
     }
 
     if (password) {
@@ -114,5 +134,28 @@ export class UserService {
     }
 
     return this.userRepository.save(user);
+  }
+
+  async verifyEmail(code: string): Promise<boolean> {
+    try {
+      const verification = await this.verificationService.findOne({
+        where: {
+          code,
+        },
+        relations: ['user'],
+      });
+
+      if (verification) {
+        verification.user.verified = true;
+        this.userRepository.save(verification.user);
+
+        return true;
+      } else {
+        throw new Error();
+      }
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
   }
 }

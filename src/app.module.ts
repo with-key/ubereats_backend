@@ -14,6 +14,7 @@ import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
+import { Verification } from './users/entities/verification.entity';
 
 @Module({
   imports: [
@@ -45,7 +46,7 @@ import { AuthModule } from './auth/auth.module';
       database: process.env.DB_NAME,
       synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
       logging: true, // db에서 일어나는 일을 터미널에 표시 여부
-      entities: [User],
+      entities: [User, Verification],
     }),
     JwtModule.forRoot({
       privateKey: process.env.SECRET_KEY,
