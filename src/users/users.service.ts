@@ -7,7 +7,6 @@ import { User } from './entities/user.entity';
 import { JwtService } from 'src/jwt/jwt.service';
 import { EditProfileInput } from './dtos/edit-profile.dto';
 import { Verification } from './entities/verification.entity';
-import { VerifyEmailInput } from './dtos/verify-eamil.dto';
 
 @Injectable()
 export class UserService {
@@ -148,7 +147,7 @@ export class UserService {
       if (verification) {
         verification.user.verified = true;
         this.userRepository.save(verification.user);
-
+        this.verificationService.delete(verification.id); // 인증이 종료되면 삭제된다.
         return true;
       } else {
         throw new Error();
