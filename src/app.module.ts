@@ -15,6 +15,7 @@ import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
 import { Verification } from './users/entities/verification.entity';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -30,6 +31,9 @@ import { Verification } from './users/entities/verification.entity';
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
         SECRET_KEY: Joi.string().required(),
+        MAILGUN_API_KEY: Joi.string().required(),
+        MAILGUN_DOMAIN_NAME: Joi.string().required(),
+        MAILGUN_FROM_EMAIL: Joi.string().required(),
       }),
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -51,6 +55,11 @@ import { Verification } from './users/entities/verification.entity';
     JwtModule.forRoot({
       privateKey: process.env.SECRET_KEY,
     }),
+    MailModule.forRoot({
+      apiKey: process.env.MAILGUN_API_KEY,
+      domain: process.env.MAILGUN_DOMAIN_NAME,
+      fromEmail: process.env.MAILGUN_FROM_EMAIL,
+    }),
     UsersModule,
     AuthModule,
   ],
@@ -63,9 +72,3 @@ export class AppModule implements NestModule {
     });
   }
 }
-
-/**
- * Code First VS Schema First 설정
- * Schema First: 타입스크립트와 GQL 스키마를 따로따로 만들어줘야 한다.
- * Code First: 타입스크립트로 GQL을 만들어서 사용한다.
- */
