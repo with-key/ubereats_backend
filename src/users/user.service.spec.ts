@@ -61,7 +61,7 @@ describe('UserService', () => {
 
   describe('createAccount', () => {
     it('존재하는 아이디 조회', async () => {
-      usersRepository.findOne.mockRejectedValue({
+      usersRepository.findOne.mockResolvedValue({
         id: 1,
         email: '11111',
       });
