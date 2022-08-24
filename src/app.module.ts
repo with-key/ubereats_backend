@@ -16,6 +16,9 @@ import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
 import { Verification } from './users/entities/verification.entity';
 import { MailModule } from './mail/mail.module';
+import { RestaurantsModule } from './restaurants/restaurants.module';
+import { Restaurant } from './restaurants/entities/restaurant.entity';
+import { Category } from './restaurants/entities/category.entity';
 
 @Module({
   imports: [
@@ -52,7 +55,7 @@ import { MailModule } from './mail/mail.module';
       database: process.env.DB_NAME,
       synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
       logging: true, // db에서 일어나는 일을 터미널에 표시 여부
-      entities: [User, Verification],
+      entities: [User, Verification, Restaurant, Category],
     }),
     JwtModule.forRoot({
       privateKey: process.env.SECRET_KEY,
@@ -64,6 +67,7 @@ import { MailModule } from './mail/mail.module';
     }),
     UsersModule,
     AuthModule,
+    RestaurantsModule,
   ],
 })
 export class AppModule implements NestModule {
