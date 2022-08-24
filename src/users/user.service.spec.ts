@@ -7,11 +7,11 @@ import { User } from './entities/user.entity';
 import { Verification } from './entities/verification.entity';
 import { UserService } from './users.service';
 
-const mockRepository = {
+const mockRepository = () => ({
   findOne: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
-};
+});
 
 const mockJwtService = {
   sign: jest.fn(),
@@ -34,11 +34,11 @@ describe('UserService', () => {
         UserService,
         {
           provide: getRepositoryToken(User),
-          useValue: mockRepository,
+          useValue: mockRepository(),
         },
         {
           provide: getRepositoryToken(Verification),
-          useValue: mockRepository,
+          useValue: mockRepository(),
         },
         {
           provide: JwtService,
@@ -60,22 +60,33 @@ describe('UserService', () => {
   });
 
   describe('createAccount', () => {
+    const createAccountArgs = {
+      email: '',
+      password: '',
+      role: 0,
+    };
+
     it('존재하는 아이디 조회', async () => {
       usersRepository.findOne.mockResolvedValue({
         id: 1,
         email: '11111',
       });
 
-      const result = await service.createAccount({
-        email: '',
-        password: '',
-        role: 0,
-      });
+      const result = await service.createAccount(createAccountArgs);
 
       expect(result).toMatchObject({
         ok: false,
         error: '이미 존재하는 아이디 입니다.',
       });
+    });
+
+    it('새로운 유저 만들기', async () => {
+      usersRepository.findOne.mockResolvedValue(undefined); // exists가 항상 falsy
+      const result = await service.createAccount(createAccountArgs);
+      expect(usersRepository.create).toHaveBeenCalledTimes(1);
+      //   expect(result).toMatchObject({
+      //     ok: true,
+      //   });
     });
   });
 
