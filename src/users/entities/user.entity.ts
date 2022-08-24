@@ -15,7 +15,6 @@ import {
 import * as bcrypt from 'bcrypt';
 import { InternalServerErrorException } from '@nestjs/common';
 
-// type UserRole = 'client' | 'owner' | 'delivery';
 enum UserRole {
   Owner,
   Client,
@@ -25,7 +24,7 @@ enum UserRole {
 /**
  * enum을 사용하고자 할 때는 registerEnumType 를 통해서 register를 해줘야한다.
  */
-registerEnumType(UserRole, { name: 'UserRole' }); // ???
+registerEnumType(UserRole, { name: 'UserRole' });
 
 @InputType({ isAbstract: true })
 @ObjectType()
@@ -60,8 +59,8 @@ export class User extends CoreEntity {
     if (this.password) {
       try {
         this.password = await bcrypt.hash(this.password, 10);
-      } catch (e) {
-        console.log(e);
+      } catch (error) {
+        console.log(error);
       }
     }
   }
@@ -72,8 +71,7 @@ export class User extends CoreEntity {
   async checkPassword(aPassword: string): Promise<boolean> {
     try {
       return await bcrypt.compare(aPassword, this.password);
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
       throw new InternalServerErrorException();
     }
   }

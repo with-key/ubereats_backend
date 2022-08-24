@@ -8,9 +8,7 @@ import { MailModuleOptions } from './mail.interfaces';
 export class MailService {
   constructor(
     @Inject(CONFIG_OPTIONS) private readonly options: MailModuleOptions,
-  ) {
-    this.sendEmail('testing', 'test');
-  }
+  ) {}
 
   private async sendEmail(subject: string, content: string) {
     const form = new FormData();
@@ -32,6 +30,6 @@ export class MailService {
       },
     );
 
-    console.log(data.body);
+    // console.log(data.body);
   }
 }

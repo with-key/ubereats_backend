@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateAccountInput } from './dtos/create-account.dto';
-import { LoginInput } from './dtos/login.dto';
+import {
+  CreateAccountInput,
+  CreateAccountOutput,
+} from './dtos/create-account.dto';
+import { LoginInput, LoginOutput } from './dtos/login.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from 'src/jwt/jwt.service';
-import { EditProfileInput } from './dtos/edit-profile.dto';
+import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { Verification } from './entities/verification.entity';
+import { UseProfileOutput } from './dtos/user-profile.dto';
+import { VerifyEmailOutput } from './dtos/verify-eamil.dto';
 
 @Injectable()
 export class UserService {
@@ -21,21 +26,23 @@ export class UserService {
     email,
     role,
     password,
-  }: CreateAccountInput): Promise<string | undefined> {
+  }: CreateAccountInput): Promise<CreateAccountOutput> {
     try {
+      // 중복 이메일 확인
       const exists = await this.userRepository.findOne({
         where: {
           email,
         },
       });
 
-      // email이 이미 등록된 것이라면, if문에서 걸림
       if (exists) {
-        return '이미 존재하는 아이디 입니다.';
+        return {
+          ok: false,
+          error: '이미 존재하는 아이디 입니다.',
+        };
       }
 
-      // save: db에 저장, create: db에 저장할 아이템을 생성
-      // create 전에 @BeforeInsert 에 의해서 비밀번호가 hash된다.
+      // 새로운 계정 생성
       const user = await this.userRepository.save(
         this.userRepository.create({
           email,
@@ -44,20 +51,25 @@ export class UserService {
         }),
       );
 
+      // 새로운 verification 생성
       await this.verificationService.save(
         this.verificationService.create({
           user,
         }),
       );
+
+      return {
+        ok: true,
+      };
     } catch (error) {
-      return '계정을 생성할 수 없음';
+      return {
+        ok: false,
+        error: '새로운 계정을 생성할 수 없습니다.',
+      };
     }
   }
 
-  async login({
-    email,
-    password,
-  }: LoginInput): Promise<{ ok: boolean; error?: string; token?: string }> {
+  async login({ email, password }: LoginInput): Promise<LoginOutput> {
     try {
       // 유저 존재 여부 확인
       const user = await this.userRepository.findOne({
@@ -66,8 +78,6 @@ export class UserService {
         },
         select: ['password', 'id'],
       });
-
-      console.log('user', user);
 
       if (!user) {
         return {
@@ -85,10 +95,36 @@ export class UserService {
         };
       }
 
+      // 토큰 생성
       const token = this.jwtService.sign(user.id);
       return {
         ok: true,
         token,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: '토큰 생성을 실패했습니다.',
+      };
+    }
+  }
+
+  async findById(id: number): Promise<UseProfileOutput> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: {
+          id,
+        },
+      });
+      if (!user) {
+        return {
+          ok: false,
+          error: '유저를 찾을 수 없습니다.',
+        };
+      }
+      return {
+        ok: true,
+        user,
       };
     } catch (error) {
       return {
@@ -98,44 +134,54 @@ export class UserService {
     }
   }
 
-  async findById(id: number): Promise<User> {
-    return this.userRepository.findOne({
-      where: {
-        id,
-      },
-    });
-  }
   /**
    * @BeforeUpdate()를 사용했음에도 비밀번호 변경 시, 해쉬가 되지 않는 이유
    * entity를 거치지 않고 db에 바로 query를 보내기 때문이다. 그래서 빠르지만, @BeforeUpdate()가 패스된다.
    * 그래서 이것을 해결하기 위해 update가 아니라 save를 사용한다.
    */
-  async editProfile(userId: number, { email, password }: EditProfileInput) {
-    // return this.userRepository.update(userId, { ...editProfileInput });
-    const user = await this.userRepository.findOne({
-      where: {
-        id: userId,
-      },
-    });
+  async editProfile(
+    userId: number,
+    { email, password }: EditProfileInput,
+  ): Promise<EditProfileOutput> {
+    try {
+      // 사용자 조회
+      const user = await this.userRepository.findOne({
+        where: {
+          id: userId,
+        },
+      });
 
-    if (email) {
-      user.email = email;
-      user.verified = false;
-      await this.verificationService.save(
-        this.verificationService.create({
-          user,
-        }),
-      );
+      // 이메일을 변경한다면,
+      if (email) {
+        user.email = email;
+        user.verified = false;
+
+        console.log(user);
+        await this.verificationService.save(
+          this.verificationService.create({
+            user,
+          }),
+        );
+      }
+
+      // 패스워드를 변경한다면,
+      if (password) {
+        user.password = password;
+      }
+
+      this.userRepository.save(user);
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
     }
-
-    if (password) {
-      user.password = password;
-    }
-
-    return this.userRepository.save(user);
   }
 
-  async verifyEmail(code: string): Promise<boolean> {
+  async verifyEmail(code: string): Promise<VerifyEmailOutput> {
     try {
       const verification = await this.verificationService.findOne({
         where: {
@@ -148,13 +194,17 @@ export class UserService {
         verification.user.verified = true;
         this.userRepository.save(verification.user);
         this.verificationService.delete(verification.id); // 인증이 종료되면 삭제된다.
-        return true;
+        return {
+          ok: true,
+        };
       } else {
         throw new Error();
       }
-    } catch (e) {
-      console.log(e);
-      return false;
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
     }
   }
 }

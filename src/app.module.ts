@@ -31,15 +31,17 @@ import { MailModule } from './mail/mail.module';
         DB_PASSWORD: Joi.string().required(),
         DB_NAME: Joi.string().required(),
         SECRET_KEY: Joi.string().required(),
-        MAILGUN_API_KEY: Joi.string().required(),
-        MAILGUN_DOMAIN_NAME: Joi.string().required(),
-        MAILGUN_FROM_EMAIL: Joi.string().required(),
+        // MAILGUN_API_KEY: Joi.string().required(),
+        // MAILGUN_DOMAIN_NAME: Joi.string().required(),
+        // MAILGUN_FROM_EMAIL: Joi.string().required(),
       }),
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
-      context: ({ req }) => ({ user: req['user'] }),
+      context: ({ req }) => {
+        return { user: req['user'] };
+      },
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -68,7 +70,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(JwtMiddleware).forRoutes({
       path: '/graphql',
-      method: RequestMethod.POST,
+      method: RequestMethod.ALL,
     });
   }
 }
