@@ -6,50 +6,32 @@ import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
 } from './dto/create-restaurant.dto';
-import { Category } from './entities/category.entity';
+import {
+  EditRestaurantInput,
+  EditRestaurantOutput,
+} from './dto/edit-restaurant.dto';
 import { Restaurant } from './entities/restaurant.entity';
+import { CategoryRepository } from './repositories/category.repository';
 
 @Injectable()
 export class RestaurantsService {
   constructor(
     @InjectRepository(Restaurant)
     private readonly restaurantRepository: Repository<Restaurant>,
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
+    private readonly categoryRepository: CategoryRepository,
   ) {}
+
   async createRestaurant(
     owner: User,
     createRestaurantInput: CreateRestaurantInput,
   ): Promise<CreateRestaurantOutput> {
-    console.log(createRestaurantInput);
-
     const restaurant = this.restaurantRepository.create(createRestaurantInput);
     restaurant.owner = owner;
 
-    // 유저가 입력한 값을 slug화 하여 고유값으로 찾기
-    // 모든 공백 및 소문자로 치환
-    const categoryName = createRestaurantInput.categoryName
-      .trim()
-      .toLowerCase();
-    // 문자 내 공백 - 으로 치환
-    const categorySlug = categoryName.replace(/ /g, '-');
-
-    // category 테이블에서 slug 찾기
-    let category = await this.categoryRepository.findOne({
-      where: {
-        slug: categorySlug,
-      },
-    });
-
-    // // 만약 생성되어있는 slug가 없으면 새로 생성 및 저장하고 category 변수에 할당
-    if (!category) {
-      category = await this.categoryRepository.save(
-        this.categoryRepository.create({
-          name: categoryName,
-          slug: categorySlug,
-        }),
-      );
-    }
+    // 카테고리 유무에 따라 생성 또는 조회하기
+    const category = await this.categoryRepository.getOrCreate(
+      createRestaurantInput.categoryName,
+    );
 
     // // 기존에 있던 또는 새로 생성된 category가 restaurant의 category로 저장
     restaurant.category = category;
@@ -57,5 +39,43 @@ export class RestaurantsService {
     return {
       ok: true,
     };
+  }
+
+  async editRestaurant(
+    owner: User,
+    editRestaurantInput: EditRestaurantInput,
+  ): Promise<EditRestaurantOutput> {
+    // on
+    // 클라이언트에서 요청을 보낸 것이 존재하는 레스토랑인지 확인
+    try {
+      const restaurant = await this.restaurantRepository.findOne({
+        where: {
+          id: editRestaurantInput.restaurantId,
+        },
+      });
+      // findOneOrFail을 사용하지 않고 직접 exception handling을 구현
+      if (!restaurant) {
+        return {
+          ok: false,
+          error: '존재하지 않는 레스토랑 입니다',
+        };
+      }
+
+      if (restaurant.ownerId !== owner.id) {
+        return {
+          ok: false,
+          error: '소유주만 가게 정보를 수정할 수 있습니다',
+        };
+      }
+
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
+    }
   }
 }
