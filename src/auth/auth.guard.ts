@@ -16,8 +16,6 @@ export class AuthGuard implements CanActivate {
       context.getHandler(),
     );
 
-    console.log(roles);
-
     // roles이 없으면 퍼블릭 설정
     if (!roles) {
       return true;
@@ -25,8 +23,6 @@ export class AuthGuard implements CanActivate {
 
     const gqlContext = GqlExecutionContext.create(context).getContext();
     const user: User = gqlContext['user'];
-
-    console.log(user);
 
     // user가 없으면 false
     if (!user) {
