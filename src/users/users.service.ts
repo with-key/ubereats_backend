@@ -18,7 +18,7 @@ export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Verification)
-    private readonly verificationService: Repository<Verification>,
+    private readonly verificationRepository: Repository<Verification>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -52,8 +52,8 @@ export class UserService {
       );
 
       // 새로운 verification 생성
-      await this.verificationService.save(
-        this.verificationService.create({
+      await this.verificationRepository.save(
+        this.verificationRepository.create({
           user,
         }),
       );
@@ -157,8 +157,8 @@ export class UserService {
         user.verified = false;
 
         console.log(user);
-        await this.verificationService.save(
-          this.verificationService.create({
+        await this.verificationRepository.save(
+          this.verificationRepository.create({
             user,
           }),
         );
@@ -183,7 +183,7 @@ export class UserService {
 
   async verifyEmail(code: string): Promise<VerifyEmailOutput> {
     try {
-      const verification = await this.verificationService.findOne({
+      const verification = await this.verificationRepository.findOne({
         where: {
           code,
         },
@@ -193,7 +193,7 @@ export class UserService {
       if (verification) {
         verification.user.verified = true;
         this.userRepository.save(verification.user);
-        this.verificationService.delete(verification.id); // 인증이 종료되면 삭제된다.
+        this.verificationRepository.delete(verification.id); // 인증이 종료되면 삭제된다.
         return {
           ok: true,
         };

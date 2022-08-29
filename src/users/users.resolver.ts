@@ -6,12 +6,11 @@ import {
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { LoginInput, LoginOutput } from './dtos/login.dto';
-import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { UseProfileOutput } from './dtos/user-profile.dto';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { VerifyEmailInput, VerifyEmailOutput } from './dtos/verify-eamil.dto';
+import { Role } from 'src/auth/role.decorator';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -29,14 +28,14 @@ export class UsersResolver {
     return this.userService.login(loginIput);
   }
 
-  @UseGuards(AuthGuard)
   @Query(() => UseProfileOutput)
+  @Role(['Any'])
   userProfile(@AuthUser() authUser: User): Promise<UseProfileOutput> {
     return this.userService.findById(authUser.id);
   }
 
-  @UseGuards(AuthGuard)
   @Mutation(() => EditProfileOutput)
+  @Role(['Any']) // 로그인 한 누구나 사용할 수 있는 API
   editProfile(
     @AuthUser() authUser: User,
     @Args('input') editProfileInput: EditProfileInput,
