@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
+import { AllCategoriesOutput } from './dto/all-category.dto';
+import { CategoryInput, CategoryOutput } from './dto/category.dto';
 import {
   CreateRestaurantInput,
   CreateRestaurantOutput,
@@ -137,6 +139,56 @@ export class RestaurantsService {
 
       return {
         ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
+    }
+  }
+
+  async getAllCategories(): Promise<AllCategoriesOutput> {
+    try {
+      const categories = await this.categoryRepository.find();
+      return {
+        ok: true,
+        categories,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
+    }
+  }
+
+  countRestaurants(category: Category) {
+    return this.restaurantRepository.count({
+      category,
+    });
+  }
+
+  async findCategoryBySlug(
+    categoryInput: CategoryInput,
+  ): Promise<CategoryOutput> {
+    try {
+      const category = await this.categoryRepository.findOne({
+        where: {
+          slug: categoryInput.slug,
+        },
+      });
+
+      if (!category) {
+        return {
+          ok: false,
+          error: '존재하지 않는 카테고리 입니다.',
+        };
+      }
+
+      return {
+        ok: true,
+        category,
       };
     } catch (error) {
       return {
