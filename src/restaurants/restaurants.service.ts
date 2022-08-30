@@ -10,6 +10,7 @@ import {
   EditRestaurantInput,
   EditRestaurantOutput,
 } from './dto/edit-restaurant.dto';
+import { Category } from './entities/category.entity';
 import { Restaurant } from './entities/restaurant.entity';
 import { CategoryRepository } from './repositories/category.repository';
 
@@ -18,7 +19,7 @@ export class RestaurantsService {
   constructor(
     @InjectRepository(Restaurant)
     private readonly restaurantRepository: Repository<Restaurant>,
-    private readonly categoryRepository: CategoryRepository,
+    private readonly categoryRepository: CategoryRepository, // 커스텀 레포짓토리
   ) {}
 
   async createRestaurant(
@@ -33,7 +34,7 @@ export class RestaurantsService {
       createRestaurantInput.categoryName,
     );
 
-    // // 기존에 있던 또는 새로 생성된 category가 restaurant의 category로 저장
+    // 기존에 있던 또는 새로 생성된 category가 restaurant의 category로 저장
     restaurant.category = category;
     this.restaurantRepository.save(restaurant);
     return {
@@ -45,7 +46,6 @@ export class RestaurantsService {
     owner: User,
     editRestaurantInput: EditRestaurantInput,
   ): Promise<EditRestaurantOutput> {
-    // on
     // 클라이언트에서 요청을 보낸 것이 존재하는 레스토랑인지 확인
     try {
       const restaurant = await this.restaurantRepository.findOne({
@@ -67,6 +67,25 @@ export class RestaurantsService {
           error: '소유주만 가게 정보를 수정할 수 있습니다',
         };
       }
+
+      let category: Category = null;
+      // categoryName이 있다면, 사용자가 수정하고자 하는 의도로 판단
+      if (editRestaurantInput.categoryName) {
+        // 카테고리가 있다면 조회, 없다면 생성하고 기존에 선언했던 변수에 할당
+        category = await this.categoryRepository.getOrCreate(
+          editRestaurantInput.categoryName,
+        );
+      }
+      // 카테고리를 생성 또는 조회했다면, 새로운 값으로 레스토랑 정보를 수정
+      // 'save'는 기존에 정보가 있다면 수정, 없다면 새롭게 저장
+      await this.restaurantRepository.save([
+        {
+          id: editRestaurantInput.restaurantId,
+          ...editRestaurantInput,
+          // 카테고리는 nullable 이기때문에 있을수도, 없을수도 있다.
+          ...(category && { category }),
+        },
+      ]);
 
       return {
         ok: true,

@@ -14,8 +14,8 @@ export class Restaurant extends CoreEntity {
   @IsString()
   name: string;
 
-  @Field(() => String, { defaultValue: '강남' })
-  @Column({ default: '강남' })
+  @Field(() => String)
+  @Column()
   @IsString()
   address: string;
 
