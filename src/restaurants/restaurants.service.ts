@@ -7,6 +7,10 @@ import {
   CreateRestaurantOutput,
 } from './dto/create-restaurant.dto';
 import {
+  DeleteRestaurantInput,
+  DeleteRestaurantOutput,
+} from './dto/delete-restaurant.dto';
+import {
   EditRestaurantInput,
   EditRestaurantOutput,
 } from './dto/edit-restaurant.dto';
@@ -86,6 +90,50 @@ export class RestaurantsService {
           ...(category && { category }),
         },
       ]);
+
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error,
+      };
+    }
+  }
+
+  async deleteRestaurant(
+    owner: User,
+    deleteRestaurantInput: DeleteRestaurantInput,
+  ): Promise<DeleteRestaurantOutput> {
+    // valid 1. 존재하는 레스토랑인지 확인
+    try {
+      const restaurant = await this.restaurantRepository.findOne({
+        where: {
+          id: deleteRestaurantInput.restaurantId,
+        },
+      });
+
+      // valid 2. 레스토랑의 오너가 맞는지 확인
+
+      if (!restaurant) {
+        return {
+          ok: false,
+          error: '존재하지 않는 레스토랑입니다',
+        };
+      }
+
+      if (restaurant.ownerId !== owner.id) {
+        return {
+          ok: false,
+          error: '레스토랑의 소유주가 아닙니다.',
+        };
+      }
+
+      // 존재 하는 레스토랑이라면 삭제
+      await this.restaurantRepository.delete(
+        deleteRestaurantInput.restaurantId,
+      );
 
       return {
         ok: true,
