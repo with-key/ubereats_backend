@@ -1,3 +1,5 @@
+import { OrderItem } from './orders/entities/order-item.entity';
+import { Dish } from './restaurants/entities/dish.entity';
 import { ConfigModule } from '@nestjs/config';
 import {
   MiddlewareConsumer,
@@ -19,6 +21,8 @@ import { MailModule } from './mail/mail.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { Category } from './restaurants/entities/category.entity';
+import { OrdersModule } from './orders/orders.module';
+import { Order } from './orders/entities/order.entity';
 
 @Module({
   imports: [
@@ -55,7 +59,15 @@ import { Category } from './restaurants/entities/category.entity';
       database: process.env.DB_NAME,
       synchronize: true, // 이 설정으로 Entity와 DB를 항상 일치시켜준다. (저장과 동시에)
       logging: true, // db에서 일어나는 일을 터미널에 표시 여부
-      entities: [User, Verification, Restaurant, Category],
+      entities: [
+        User,
+        Verification,
+        Restaurant,
+        Category,
+        Dish,
+        Order,
+        OrderItem,
+      ],
     }),
     JwtModule.forRoot({
       privateKey: process.env.SECRET_KEY,
@@ -68,6 +80,7 @@ import { Category } from './restaurants/entities/category.entity';
     UsersModule,
     AuthModule,
     RestaurantsModule,
+    OrdersModule,
   ],
 })
 export class AppModule implements NestModule {

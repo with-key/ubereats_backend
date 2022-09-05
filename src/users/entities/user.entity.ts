@@ -1,3 +1,4 @@
+import { Order } from './../../orders/entities/order.entity';
 import {
   Field,
   InputType,
@@ -59,6 +60,13 @@ export class User extends CoreEntity {
   @OneToMany(() => Restaurant, (restaurant) => restaurant.owner)
   restaurants: Restaurant[];
 
+  @Field(() => [Order])
+  @OneToMany(() => Order, (order) => order.customer)
+  orders: Order[];
+
+  @Field(() => [Order])
+  @OneToMany(() => Order, (order) => order.driver)
+  rides: Order[];
   /**
    * user의 entity를 저장하기전에 password를 hash 한다.
    */

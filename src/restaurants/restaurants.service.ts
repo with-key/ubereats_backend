@@ -164,9 +164,7 @@ export class RestaurantsService {
   }
 
   countRestaurants(category: Category) {
-    return this.restaurantRepository.count({
-      category,
-    });
+    return this.restaurantRepository.count({});
   }
 
   async findCategoryBySlug(
