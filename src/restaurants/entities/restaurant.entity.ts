@@ -11,43 +11,43 @@ import { Dish } from './dish.entity';
 @ObjectType()
 @Entity()
 export class Restaurant extends CoreEntity {
-  @Field((type) => String)
+  @Field(() => String)
   @Column()
   @IsString()
   @Length(5)
   name: string;
 
-  @Field((type) => String)
+  @Field(() => String)
   @Column()
   @IsString()
   coverImg: string;
 
-  @Field((type) => String)
+  @Field(() => String)
   @Column()
   @IsString()
   address: string;
 
-  @Field((type) => Category, { nullable: true })
-  @ManyToOne((type) => Category, (category) => category.restaurants, {
+  @Field(() => Category, { nullable: true })
+  @ManyToOne(() => Category, (category) => category.restaurants, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   category: Category;
 
-  @Field((type) => User)
-  @ManyToOne((type) => User, (user) => user.restaurants, {
+  @Field(() => User)
+  @ManyToOne(() => User, (user) => user.restaurants, {
     onDelete: 'CASCADE',
   })
   owner: User;
 
-  @Field((type) => [Order])
-  @OneToMany((type) => Order, (order) => order.restaurant)
+  @Field(() => [Order])
+  @OneToMany(() => Order, (order) => order.restaurant)
   orders: Order[];
 
   @RelationId((restaurant: Restaurant) => restaurant.owner)
   ownerId: number;
 
-  @Field((type) => [Dish])
-  @OneToMany((type) => Dish, (dish) => dish.restaurant)
+  @Field(() => [Dish])
+  @OneToMany(() => Dish, (dish) => dish.restaurant)
   menu: Dish[];
 }

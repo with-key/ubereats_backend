@@ -156,7 +156,6 @@ export class UserService {
         user.email = email;
         user.verified = false;
 
-        console.log(user);
         await this.verificationRepository.save(
           this.verificationRepository.create({
             user,

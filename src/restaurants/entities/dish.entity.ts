@@ -28,6 +28,7 @@ export class DishOption {
   extra?: number;
 }
 
+// 매뉴 정보
 @InputType('DishInputType', { isAbstract: true })
 @ObjectType()
 @Entity()

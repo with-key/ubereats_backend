@@ -32,6 +32,7 @@ export class RestaurantsService {
     owner: User,
     createRestaurantInput: CreateRestaurantInput,
   ): Promise<CreateRestaurantOutput> {
+    console.log(createRestaurantInput);
     const restaurant = this.restaurantRepository.create(createRestaurantInput);
     restaurant.owner = owner;
 
