@@ -118,18 +118,22 @@ export class OrdersService {
     user: User,
     { status }: GetOrdersInput,
   ): Promise<GetOrdersOutput> {
+    console.log(status);
     try {
       let orders: Order[];
       if (user.role === UserRole.Client) {
         orders = await this.orders.find({
           where: {
             customer: user,
+            // status가 falsy이면, 아무것도 없도록
+            ...(status && { orderStatus: status }),
           },
         });
       } else if (user.role === UserRole.Delivery) {
         orders = await this.orders.find({
           where: {
             driver: user,
+            ...(status && { orderStatus: status }),
           },
         });
       } else if (user.role === UserRole.Owner) {
@@ -142,12 +146,15 @@ export class OrdersService {
           relations: ['orders'],
         });
 
-        // console.log(restaurants);
         orders = restaurants
           .map((restaurant) => {
             return restaurant.orders;
           })
           .flat(1);
+
+        if (status) {
+          orders = orders.filter((order) => order.orderStatus === status);
+        }
       }
 
       return {
