@@ -1,19 +1,29 @@
 # NuberEats
 
 ### BE
-- Typescript
-- nest.js
-- PosrgreSQL
-- DTO validator
-  - class-validator
 
+- nest.js + typescript
+- PosrgreSQL + typeORM
+- GraphQL
+- Apollo-server-express
+- graphql-subscriptions (websocket)
 
 ### FE
-- React
+
+- React.js + typescript (Vite)
 - Apollo client
-- tailwind CSS
+- emotion
+- jest / cypress
+
+### CI/CD
+
+- AWS EC2
+- nginX
+- docker
+- Travis CI
 
 ### common
+
 - eslint
 - prettier
-- npm 
+- npm
