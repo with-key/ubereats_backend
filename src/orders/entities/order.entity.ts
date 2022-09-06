@@ -13,7 +13,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
 import { IsEnum, IsNumber } from 'class-validator';
 
-enum OrderStatus {
+export enum OrderStatus {
   Pending = 'Pending',
   Cooking = 'Cooking',
   PickedUp = 'PickedUp',

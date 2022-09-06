@@ -1,7 +1,8 @@
+import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
+import { User, UserRole } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateOrderInput, CreateOrderOutput } from './dtos/create-order.dto';
 import { Order } from './entities/order.entity';
@@ -109,6 +110,54 @@ export class OrdersService {
       return {
         ok: false,
         error: '주문 등록이 실패했습니다.',
+      };
+    }
+  }
+
+  async getOrders(
+    user: User,
+    { status }: GetOrdersInput,
+  ): Promise<GetOrdersOutput> {
+    try {
+      let orders: Order[];
+      if (user.role === UserRole.Client) {
+        orders = await this.orders.find({
+          where: {
+            customer: user,
+          },
+        });
+      } else if (user.role === UserRole.Delivery) {
+        orders = await this.orders.find({
+          where: {
+            driver: user,
+          },
+        });
+      } else if (user.role === UserRole.Owner) {
+        // user가 여러개의 레스토랑을 가질 수 있기 때문에 아래와 같은 처리가 필요하다.
+        // user가 owner인 레스토랑을 모두 찾고
+        const restaurants = await this.restaurants.find({
+          where: {
+            owner: user,
+          },
+          relations: ['orders'],
+        });
+
+        // console.log(restaurants);
+        orders = restaurants
+          .map((restaurant) => {
+            return restaurant.orders;
+          })
+          .flat(1);
+      }
+
+      return {
+        ok: true,
+        orders,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '주문내역을 불러올 수 없습니다.',
       };
     }
   }
