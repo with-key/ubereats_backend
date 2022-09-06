@@ -1,5 +1,4 @@
 import { OrderItem } from './order-item.entity';
-import { Dish } from './../../restaurants/entities/dish.entity';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import {
   Field,
@@ -10,7 +9,14 @@ import {
 } from '@nestjs/graphql';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  RelationId,
+} from 'typeorm';
 import { IsEnum, IsNumber } from 'class-validator';
 
 export enum OrderStatus {
@@ -33,11 +39,18 @@ export class Order extends CoreEntity {
   })
   customer: User;
 
+  // 현재 우리 Entity에서 연결된 컬럼의 ID를 새로운 컬럼으로 만들 수 있다
+  @RelationId((order: Order) => order.customer)
+  customerId: number;
+
   @ManyToOne(() => User, (user) => user.rides, {
     onDelete: 'SET NULL',
     nullable: true,
   })
   driver?: User;
+
+  @RelationId((order: Order) => order.driver)
+  driverId: number;
 
   @Field(() => Restaurant)
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.orders, {
@@ -46,7 +59,6 @@ export class Order extends CoreEntity {
   })
   restaurant: Restaurant;
 
-  // Dish -> OrderItem으로 수정
   @Field(() => [OrderItem])
   @ManyToMany(() => OrderItem)
   @JoinTable()
