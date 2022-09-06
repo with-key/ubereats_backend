@@ -1,12 +1,7 @@
 import { OrderItem } from './orders/entities/order-item.entity';
 import { Dish } from './restaurants/entities/dish.entity';
 import { ConfigModule } from '@nestjs/config';
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo'; // >= v10 설정
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -14,7 +9,6 @@ import * as Joi from 'joi';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
-import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
 import { Verification } from './users/entities/verification.entity';
 import { MailModule } from './mail/mail.module';
@@ -23,6 +17,7 @@ import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { Category } from './restaurants/entities/category.entity';
 import { OrdersModule } from './orders/orders.module';
 import { Order } from './orders/entities/order.entity';
+import { Context } from 'graphql-ws';
 
 @Module({
   imports: [
@@ -45,10 +40,25 @@ import { Order } from './orders/entities/order.entity';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
-      context: ({ req }) => {
-        return { user: req['user'] };
+      subscriptions: {
+        'subscriptions-transport-ws': {
+          onConnect: (connectionParams) => {
+            const TOKEN_KEY = 'x-jwt';
+            const authToken = connectionParams[TOKEN_KEY];
+            if (!authToken) {
+              throw new Error('토큰이 없습니다.');
+            }
+            // ws로 요청 시 guard의 context에 값을 전송한다.
+            return { token: authToken };
+          },
+        },
       },
+      // http로 요청 시 guard의 context에 값을 전송한다.
+      context: ({ req }) => {
+        const TOKEN_KEY = 'x-jwt';
+        return { token: req.headers[TOKEN_KEY] };
+      },
+      autoSchemaFile: true,
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -83,11 +93,4 @@ import { Order } from './orders/entities/order.entity';
     OrdersModule,
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(JwtMiddleware).forRoutes({
-      path: '/graphql',
-      method: RequestMethod.ALL,
-    });
-  }
-}
+export class AppModule {}
