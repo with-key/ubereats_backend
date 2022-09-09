@@ -1,7 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { User } from 'src/users/entities/user.entity';
+import { JwtService } from 'src/jwt/jwt.service';
+import { UserService } from 'src/users/users.service';
 import { AllowedRoles } from './role.decorator';
 
 /***
@@ -9,8 +10,12 @@ import { AllowedRoles } from './role.decorator';
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
-  canActivate(context: ExecutionContext) {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
+    private readonly userService: UserService,
+  ) {}
+  async canActivate(context: ExecutionContext) {
     const roles = this.reflector.get<AllowedRoles>(
       'roles',
       context.getHandler(),
@@ -22,20 +27,21 @@ export class AuthGuard implements CanActivate {
     }
 
     const gqlContext = GqlExecutionContext.create(context).getContext();
-    console.log(gqlContext.token);
-    const user: User = gqlContext['user'];
-
-    // user가 없으면 false
-    if (!user) {
-      return false;
+    const token = gqlContext.token;
+    if (token) {
+      const decoded = this.jwtService.verify(token.toString());
+      if (typeof decoded === 'object' && decoded.hasOwnProperty('id')) {
+        const { user } = await this.userService.findById(decoded['id']);
+        if (user) {
+          gqlContext['user'] = user; // context에 값을 추가
+          if (roles.includes('Any')) {
+            return true;
+          }
+          return roles.includes(user.role);
+        }
+      }
     }
 
-    // 권한이 Any인 API 접근 가능
-    if (roles.includes('Any')) {
-      return true;
-    }
-
-    // 설정된 API만 접근 가능
-    return roles.includes(user.role);
+    return false;
   }
 }

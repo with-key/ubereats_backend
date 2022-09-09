@@ -1,3 +1,4 @@
+import { CommonModule } from './common/common.module';
 import { OrderItem } from './orders/entities/order-item.entity';
 import { Dish } from './restaurants/entities/dish.entity';
 import { ConfigModule } from '@nestjs/config';
@@ -91,6 +92,7 @@ import { Context } from 'graphql-ws';
     AuthModule,
     RestaurantsModule,
     OrdersModule,
+    CommonModule,
   ],
 })
 export class AppModule {}
