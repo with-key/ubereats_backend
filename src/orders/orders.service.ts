@@ -1,3 +1,7 @@
+import {
+  NEW_COOKED_ORDER,
+  NEW_ORDER_UPDATE,
+} from './../common/common.constants';
 import { PubSub } from 'graphql-subscriptions';
 import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
@@ -12,6 +16,7 @@ import { Dish } from 'src/restaurants/entities/dish.entity';
 import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
 import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
 import { NEW_PENDING_ORDER, PUB_SUB } from 'src/common/common.constants';
+import { TakeOrderInput, TakeOrderOuput } from './dtos/take-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -289,15 +294,74 @@ export class OrdersService {
       };
     }
 
-    await this.orders.save([
-      {
-        id: order.id,
-        orderStatus,
-      },
-    ]);
+    // save는 create가 되었다면 전체 Entity 불러 오지만,
+    // save만 있으면 수정된 값만 보이게 된다.
+    await this.orders.save({
+      id: order.id,
+      orderStatus,
+    });
 
+    // 오더 상태가 변경된 오더
+    const newOrder = { ...order, orderStatus };
+    // Subscription Trigger 발생 1 -> 오너의 액션에 따라 배달원에게 조리 완료 알림을 알려줌
+    if (user.role === UserRole.Owner) {
+      // 조리상태가 완료된 상태되었다고 클라이언트에서 요청이 들어왔을 때
+      if (orderStatus === OrderStatus.Cooked) {
+        await this.pubSub.publish(NEW_COOKED_ORDER, {
+          cookedOrder: newOrder,
+        });
+      }
+    }
+
+    // Subscription Trigger 발생 2 -> 주문 상태 변경 사실을 모두에게 알려줌
+    await this.pubSub.publish(NEW_ORDER_UPDATE, { orderUpdates: newOrder });
     return {
       ok: true,
     };
+  }
+
+  async takeOrder(
+    driver: User,
+    takeOrderInput: TakeOrderInput,
+  ): Promise<TakeOrderOuput> {
+    try {
+      const order = await this.orders.findOne({
+        where: {
+          id: takeOrderInput.id,
+        },
+      });
+
+      if (!order) {
+        return {
+          ok: false,
+          error: '주문이 존재하지 않습니다.',
+        };
+      }
+
+      if (order.driver) {
+        return {
+          ok: false,
+          error: '이미 배달원이 등록된 주문입니다.',
+        };
+      }
+
+      // 생성되어있던 주문내역에 배달원을 추가한다.
+      await this.orders.save({
+        id: order.id,
+        driver,
+      });
+
+      // 배달원이 추가됐음을 오너, 배달원, 손님에게 모두 알린다.
+      await this.pubSub.publish(NEW_ORDER_UPDATE, { ...order, driver });
+
+      return {
+        ok: true,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: '배달원 등록이 실패했습니다.',
+      };
+    }
   }
 }
